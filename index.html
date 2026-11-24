@@ -75,14 +75,21 @@
   .photo.portrait { aspect-ratio: 2 / 3; }
   img.logo-slot { object-fit: cover; display: block; }
   .hero-bg { display: grid; place-items: center; min-height: clamp(20rem, 62vh, 38rem); padding: 2rem 1.5rem;
-             background: url("images/hero.jpg") center / cover no-repeat; }
+             background: linear-gradient(rgba(51,52,63,.18), rgba(51,52,63,.35)), url("images/hero.jpg") center / cover no-repeat; }
   .hero-logo { width: clamp(11rem, 30vw, 18rem); height: auto; }
   .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-  .logo-slot { width: 3.5rem; height: 3.5rem; border-radius: 50%; flex: none; aspect-ratio: 1; }
+  .logo-slot { width: 3.75rem; height: 3.75rem; border-radius: 50%; flex: none; aspect-ratio: 1; }
   header.top .mark { display: flex; align-items: center; gap: .85rem; }
 
   .svc { display: grid; grid-template-columns: 1fr 15rem; gap: 1.5rem 2rem; align-items: center; }
   .about-grid { display: grid; grid-template-columns: 1fr 15rem; gap: 2rem; align-items: start; }
+
+  .credit-row { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-top: 1rem; }
+  .credit { margin: 0; font-size: .9rem; color: var(--soft); }
+  .carousel-toggle { font: inherit; font-size: .85rem; color: var(--soft); background: transparent; border: 1px solid var(--line);
+                     border-radius: 4px; padding: .35rem .8rem; cursor: pointer; }
+  .carousel-toggle:hover { border-color: var(--soft); color: var(--ink); }
+  .carousel-toggle:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 
   /* Carousel: plain CSS scroll-snap, no JavaScript needed */
   .carousel { display: flex; gap: 1rem; overflow-x: auto; scroll-snap-type: x mandatory;
@@ -106,7 +113,7 @@
 <div class="wrap">
   <header class="top">
     <a class="mark" href="#top">
-      <img class="logo-slot" src="images/logo.png" alt="" width="56" height="56">White Buffalo Healing Arts</a>
+      <img class="logo-slot" src="images/logo.png" alt="" width="60" height="60">White Buffalo Healing Arts</a>
     <nav aria-label="Page sections">
       <a href="#services">Services</a>
       <a href="#about">About</a>
@@ -183,17 +190,21 @@
         <div class="photo"><img src="images/gallery-8.jpg" alt="A therapist looking down while positioning a client's bent leg" width="900" height="600" loading="lazy"></div>
         <div class="photo"><img src="images/gallery-9.jpg" alt="A therapist working on a client's upper back and neck" width="900" height="600" loading="lazy"></div>
       </div>
+      <div class="credit-row">
+        <p class="credit">Photography by <a href="https://jessdaddio.com/">Jess Daddio</a></p>
+        <button type="button" class="carousel-toggle" aria-pressed="false">Pause slideshow</button>
+      </div>
     </div>
   </section>
 
   <section id="about">
     <div class="wrap about-grid">
       <div>
-      <h2>About Rogelio Cruz</h2>
+      <h2>About Me</h2>
       <p>Licensed Massage Therapist and Reiki Practitioner.</p>
       <p>I believe everyone has a natural state of being that is vibrant and loving. We can lose touch with it through injury, stress, chronic health issues, or simply living in a society that doesn't encourage self-connection. My wish is to create a safe, supportive, and comfortable space where the body can let go of heavy baggage and return to balance.</p>
       <p>The mind-body-spirit connection is at the center of my work. I see the body as a guide and messenger for holistic health, and my job is to listen and respond to what each person needs, so every session is different.</p>
-      <p>Away from the table you'll find me running in the mountains, admiring flowers, or riding my bike around town. I also love meditation, good food, and cozy blankets.</p>
+      <p>Away from the table you'll find me running in the mountains, admiring flowers, or riding my bike around town.</p>
       </div>
       <div class="photo portrait"><img src="images/portrait.jpg" alt="Rogelio Cruz leaning over a client with both hands on their back" width="720" height="1080" loading="lazy"></div>
     </div>
@@ -232,7 +243,7 @@
 
       <details>
         <summary>I reached out but haven't heard back. What should I do?</summary>
-        <p>I aim to reply within 24 to 48 hours. If you emailed, check your spam folder. I get a lot of spam calls, so if you called without leaving a voicemail, I may have assumed it was spam. Please leave a message or send a text. Occasionally life gets in the way, and I'll get back to you as soon as I can.</p>
+        <p>I aim to reply within 24 to 48 hours. If you emailed, check your spam folder. I get a lot of spam calls, so if you called without leaving a voicemail, I may have assumed it was spam. Please leave a message or send a text. Occasionally life gets in the way, I'll get back to you as soon as I can.</p>
       </details>
 
     </div>
@@ -257,8 +268,49 @@
 </main>
 
 <footer>
-  <div class="wrap">&copy; 2026 White Buffalo Healing Arts. Photography by <a href="https://jessdaddio.com/">Jess Daddio</a>.</div>
+  <div class="wrap">&copy; 2026 White Buffalo Healing Arts</div>
 </footer>
 
+<script>
+/* Gallery autoplay: advances one photo every 4 seconds and loops.
+   Pauses on hover, touch, and keyboard focus, when the gallery is off screen,
+   and when the tab is hidden. Off entirely for people who prefer reduced motion. */
+(function () {
+  var track = document.querySelector('.carousel');
+  var toggle = document.querySelector('.carousel-toggle');
+  if (!track || !toggle) return;
+  var DELAY = 3000, timer = null, userPaused = false, visible = true, hovering = false;
+
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { toggle.hidden = true; return; }
+
+  function step() {
+    var first = track.children[0];
+    var gap = parseFloat(getComputedStyle(track).columnGap) || 0;
+    var atEnd = track.scrollLeft + track.clientWidth >= track.scrollWidth - 4;
+    if (atEnd) track.scrollTo({ left: 0, behavior: 'smooth' });
+    else track.scrollBy({ left: first.getBoundingClientRect().width + gap, behavior: 'smooth' });
+  }
+  function update() {
+    var shouldRun = !userPaused && visible && !hovering && !document.hidden;
+    if (shouldRun && !timer) timer = setInterval(step, DELAY);
+    if (!shouldRun && timer) { clearInterval(timer); timer = null; }
+  }
+
+  toggle.addEventListener('click', function () {
+    userPaused = !userPaused;
+    toggle.setAttribute('aria-pressed', String(userPaused));
+    toggle.textContent = userPaused ? 'Play slideshow' : 'Pause slideshow';
+    update();
+  });
+  ['mouseenter', 'focusin', 'touchstart'].forEach(function (e) { track.addEventListener(e, function () { hovering = true; update(); }, { passive: true }); });
+  ['mouseleave', 'focusout'].forEach(function (e) { track.addEventListener(e, function () { hovering = false; update(); }); });
+  track.addEventListener('touchend', function () { setTimeout(function () { hovering = false; update(); }, 6000); }, { passive: true });
+  document.addEventListener('visibilitychange', update);
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(function (entries) { visible = entries[0].isIntersecting; update(); }, { threshold: 0.3 }).observe(track);
+  }
+  update();
+})();
+</script>
 </body>
 </html>
