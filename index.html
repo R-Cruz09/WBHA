@@ -23,11 +23,17 @@
     --sans: "Instrument Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   }
   * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
+  html { scroll-behavior: smooth; scroll-padding-top: 4rem; }
   body { margin: 0; background: var(--paper); color: var(--ink); font: 400 1.0625rem/1.65 var(--sans); -webkit-font-smoothing: antialiased; }
   a { color: var(--accent); text-underline-offset: 3px; }
   a:focus-visible, .book:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
   .wrap { max-width: 52rem; margin: 0 auto; padding: 0 1.5rem; }
+
+  /* Header slides away when scrolling down and returns on any scroll up */
+  .site-header { position: sticky; top: 0; z-index: 20; background: var(--paper); border-bottom: 1px solid transparent;
+                 transition: transform .25s ease, border-color .25s ease; }
+  .site-header.scrolled { border-bottom-color: var(--line); }
+  .site-header.hide { transform: translateY(-100%); }
 
   header.top { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; padding: 1.25rem 0; }
   header.top .mark { font: 500 1.125rem var(--serif); text-decoration: none; color: var(--ink); }
@@ -97,6 +103,8 @@
   .carousel .photo { flex: 0 0 min(80%, 22rem); scroll-snap-align: start; aspect-ratio: 3 / 2; }
 
   @media (max-width: 40rem) {
+    html { scroll-padding-top: 5.5rem; }
+    header.top nav { width: 100%; justify-content: flex-end; }
     .svc, .about-grid { grid-template-columns: 1fr; }
     .about-grid .portrait { max-width: 14rem; }
   }
@@ -105,14 +113,15 @@
     .contact dl { grid-template-columns: 1fr; gap: 0; }
     .contact dd { margin-bottom: .75rem; }
   }
-  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .site-header { transition: none; } }
 </style>
 </head>
 <body>
 
-<div class="wrap">
+<div class="site-header" id="site-header">
+  <div class="wrap">
   <header class="top">
-    <a class="mark" href="#top">
+    <a class="mark" href="#">
       <img class="logo-slot" src="images/logo.png" alt="" width="60" height="60">White Buffalo Healing Arts</a>
     <nav aria-label="Page sections">
       <a href="#services">Services</a>
@@ -121,9 +130,10 @@
       <a href="#contact">Contact</a>
     </nav>
   </header>
+  </div>
 </div>
 
-<main id="top">
+<main>
   <div class="hero-bg">
     <h1 class="sr-only">White Buffalo Healing Arts: massage therapy in Harrisonburg, Virginia</h1>
     <img class="hero-logo" src="images/logo-large.png" alt="" width="640" height="640">
@@ -168,8 +178,8 @@
       </div>
 
       <div class="extras">
-        <p>Gift certificates are available.</p>
-        <p>I want my work to be available to everyone, so I offer a sliding scale for 30, 60, and 90 minute sessions. <a href="https://docs.google.com/document/d/1H3I_kzkiDVPTwIjOlMQyU_r3nvJONPuTyxuq06Od9lw/edit?usp=sharing">Read about the sliding scale</a>.</p>
+        <p>Gift certificates are available for purchase.</p>
+        <p>I want my work to be available to everyone, so I offer a sliding scale rate for 30, 60, and 90 minute sessions. <a href="https://docs.google.com/document/d/1H3I_kzkiDVPTwIjOlMQyU_r3nvJONPuTyxuq06Od9lw/edit?usp=sharing">Read about the sliding scale</a>.</p>
         <p><a href="https://docs.google.com/document/d/1-dzylPI9O99W3xHaV9KyvROqvo2btajZTQ1N6o97DlI/edit?usp=sharing">Learn more about energy work</a>.</p>
         <a class="book" href="https://www.massagebook.com/search/VA/Harrisonburg/massage-therapy/white-buffalo-healing-arts/services">Book a session</a>
       </div>
@@ -226,7 +236,7 @@
 
       <details>
         <summary>Can I add energy work to my massage?</summary>
-        <p>Yes, I see massage and energy work as intertwined. Therefore when I perform a massage I may also incorporate energy work wherever I find it to be beneficial.</p>
+        <p>Yes, I see massage and energy work as intertwined. Therefore when I perform a massage I may also incorporate energy work when I find it to be beneficial.</p>
       </details>
 
       <details>
@@ -243,7 +253,7 @@
 
       <details>
         <summary>I reached out but haven't heard back. What should I do?</summary>
-        <p>I aim to reply within 24 to 48 hours. If you emailed, check your spam folder. I get a lot of spam calls, so if you called without leaving a voicemail, I may have assumed it was spam. Please leave a message or send a text. Occasionally life gets in the way, I'll get back to you as soon as I can.</p>
+        <p>I aim to reply within 24 to 48 hours. If you emailed, check your spam folder. I get a lot of spam calls, so if you called without leaving a voicemail, I may have assumed it was spam. Please leave a message or send a text. Occasionally life gets in the way, and I'll get back to you as soon as I can.</p>
       </details>
 
     </div>
@@ -279,7 +289,7 @@
   var track = document.querySelector('.carousel');
   var toggle = document.querySelector('.carousel-toggle');
   if (!track || !toggle) return;
-  var DELAY = 3000, timer = null, userPaused = false, visible = true, hovering = false;
+  var DELAY = 2700, timer = null, userPaused = false, visible = true, hovering = false;
 
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { toggle.hidden = true; return; }
 
@@ -309,6 +319,29 @@
   if ('IntersectionObserver' in window) {
     new IntersectionObserver(function (entries) { visible = entries[0].isIntersecting; update(); }, { threshold: 0.3 }).observe(track);
   }
+  update();
+})();
+</script>
+<script>
+/* Header: hides when scrolling down, comes back as soon as you scroll up,
+   and is always visible at the top of the page or when it has keyboard focus. */
+(function () {
+  var header = document.getElementById('site-header');
+  if (!header) return;
+  var lastY = window.pageYOffset, ticking = false, THRESHOLD = 6;
+
+  function update() {
+    var y = Math.max(window.pageYOffset, 0);
+    header.classList.toggle('scrolled', y > 4);
+    if (y <= 4 || y < lastY - THRESHOLD) header.classList.remove('hide');
+    else if (y > lastY + THRESHOLD && y > header.offsetHeight) header.classList.add('hide');
+    if (Math.abs(y - lastY) > THRESHOLD || y <= 4) lastY = y;
+    ticking = false;
+  }
+  window.addEventListener('scroll', function () {
+    if (!ticking) { ticking = true; requestAnimationFrame(update); }
+  }, { passive: true });
+  header.addEventListener('focusin', function () { header.classList.remove('hide'); });
   update();
 })();
 </script>
